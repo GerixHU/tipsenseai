@@ -1,35 +1,50 @@
 import { useState } from 'react'
-import { createClient } from '@supabase/supabase-js'
-
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-)
+import { supabase } from '../utils/supabaseClient'
+import { useRouter } from 'next/router'
 
 export default function Login() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
-  const [message, setMessage] = useState('')
+  const [error, setError] = useState(null)
+  const router = useRouter()
 
   const handleLogin = async (e) => {
     e.preventDefault()
-    const { error } = await supabase.auth.signInWithPassword({ email, password })
+    const { error } = await supabase.auth.signInWithPassword({
+      email,
+      password
+    })
     if (error) {
-      setMessage('Hibás bejelentkezés!')
+      setError(error.message)
     } else {
-      setMessage('Sikeres belépés! 🎉')
+      setError(null)
+      router.push('/chat') // Sikeres login után ide dobjon
     }
   }
 
   return (
-    <div style={{ backgroundColor: '#121212', color: '#fff', height: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
-      <h1>Bejelentkezés</h1>
-      <form onSubmit={handleLogin} style={{ display: 'flex', flexDirection: 'column', gap: '1rem', marginTop: '2rem' }}>
-        <input type="email" placeholder="Email" value={email} onChange={(e) => setEmail(e.target.value)} />
-        <input type="password" placeholder="Jelszó" value={password} onChange={(e) => setPassword(e.target.value)} />
-        <button type="submit">Belépés</button>
+    <div style={{ maxWidth: '400px', margin: '50px auto', padding: 20 }}>
+      <h2>Bejelentkezés</h2>
+      <form onSubmit={handleLogin}>
+        <input
+          type="email"
+          placeholder="Email cím"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          required
+          style={{ display: 'block', marginBottom: 10, width: '100%' }}
+        />
+        <input
+          type="password"
+          placeholder="Jelszó"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          required
+          style={{ display: 'block', marginBottom: 10, width: '100%' }}
+        />
+        <button type="submit" style={{ width: '100%' }}>Belépés</button>
+        {error && <p style={{ color: 'red' }}>{error}</p>}
       </form>
-      {message && <p style={{ marginTop: '1rem' }}>{message}</p>}
     </div>
   )
 }
