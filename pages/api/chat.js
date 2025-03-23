@@ -4,30 +4,28 @@ export default async function handler(req, res) {
   }
 
   const { messages } = req.body;
+  const userMessage = messages[messages.length - 1]?.content || '';
+
+  // Regex: csak akkor válaszol, ha a formátum NN.NN. Foci Tippek
+  const validFormat = /^\d{2}\.\d{2}\. Foci Tippek$/;
+
+  if (!validFormat.test(userMessage.trim())) {
+    return res.status(200).json({
+      result: "Kérlek, a ‘NN.HH. Foci Tippek’ formátumban kérdezz. (Pl: 03.23. Foci Tippek)"
+    });
+  }
 
   const systemPrompt = `
-Te egy sportfogadási szakértő vagy, a neved TipSenseAI. A felhasználó mindig egy meccsre vagy eseménysorozatra kérdez rá. Feladatod:
+Te vagy a világ legprofibb sportfogadási AI-ja. Csak focimeccsekre adsz tippeket value bet, statisztika, forma és odds alapján.
 
-- Csak futballmérkőzésekről adhatsz elemzést és tippet.
-- Egy adott meccs esetén adj legalább 3-5 konkrét tippet: kimenetel (1X2), gólok száma, szögletek, BTTS, dupla esély stb.
-- Minden tipphez írd le, hogy miért lehet benne value, milyen statisztikák alapján érdemes megfogadni.
-- Írd le, melyik tipp a legbiztosabb a felsoroltak közül.
-- Ha nem konkrét meccsre kérdeznek, hanem például "Nemzetek Ligája", "BL mai meccsek" stb., akkor válaszd ki a legjobb value fogadásokat a nap eseményeiből.
-- Ezekből készíts legalább 3 féle mix ajánlást:
-  - Egy 1-es kötést (szimpla)
-  - Egy 2-es kötést (dupla)
-  - Egy trixie típusú fogadást (3 esemény, 4 kombináció)
+Feladatod:
+- Adj 3-5 tippet az adott napi meccsekre, válaszd ki a legbiztosabb tippeket aznapra.
+- Jelezd, melyik a legbiztosabb tipp és ha van különleges Value tipp akkor azt is emeld ki.
+- Adj 1-es, 2-es kötést és egy Trixie kombinációt.
+- Fogalmazz tömören, magabiztosan, profi stílusban magyarul.
+- Ne térj el a témától, ne válaszolj másra.
 
-❗ FONTOS:
-- Más témára nem válaszolhatsz.
-- Ha a kérdés nem konkrét futballeseményre vonatkozik, vagy nem tippel kapcsolatos, válaszolj udvariasan, de utasítsd el: "Sajnálom, de kizárólag futballmeccsekre tudok tippeket adni."
-
-Válaszaid legyenek:
-- rövidek, tömörek, lényegre törők
-- érthetőek a sportfogadók számára
-- ne írj általánosságokat, csak konkrét tippet adj
-
-Ne beszélj másról, ne magyarázd el, hogy ki vagy. Csak tippet adj.
+Ha nem ‘NN.HH. Foci Tippek’ parancsot kapsz, válaszold azt, hogy nem tudsz válaszolni.
 `;
 
   try {
@@ -43,7 +41,7 @@ Ne beszélj másról, ne magyarázd el, hogy ki vagy. Csak tippet adj.
           { role: 'system', content: systemPrompt },
           ...messages
         ],
-        temperature: 0.7
+        temperature: 0.6
       })
     });
 
