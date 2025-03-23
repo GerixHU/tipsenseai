@@ -1,44 +1,61 @@
 import { useState } from 'react'
-import { createClient } from '@supabase/supabase-js'
-
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-)
-
-const MEGHIVOKOD = 'TIPSENSEAIVIP2025'
+import { supabase } from '../lib/supabaseClient'
+import { useRouter } from 'next/router'
 
 export default function Register() {
+  const router = useRouter()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
-  const [code, setCode] = useState('')
-  const [message, setMessage] = useState('')
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState('')
+  const [success, setSuccess] = useState('')
 
   const handleRegister = async (e) => {
     e.preventDefault()
-    if (code !== MEGHIVOKOD) {
-      setMessage('Hibás meghívókód!')
-      return
-    }
+    setLoading(true)
+    setError('')
+    setSuccess('')
 
-    const { error } = await supabase.auth.signUp({ email, password })
+    const { data, error } = await supabase.auth.signUp({
+      email,
+      password
+    })
+
+    setLoading(false)
+
     if (error) {
-      setMessage('Hiba a regisztrációnál!')
+      setError(error.message)
     } else {
-      setMessage('Sikeres regisztráció! 🎉 Ellenőrizd az emailed.')
+      setSuccess('Sikeres regisztráció! Kérlek ellenőrizd az emailed a megerősítéshez.')
     }
   }
 
   return (
-    <div style={{ backgroundColor: '#121212', color: '#fff', height: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
+    <div style={{ padding: '2rem', maxWidth: '400px', margin: 'auto' }}>
       <h1>Regisztráció</h1>
-      <form onSubmit={handleRegister} style={{ display: 'flex', flexDirection: 'column', gap: '1rem', marginTop: '2rem' }}>
-        <input type="email" placeholder="Email" value={email} onChange={(e) => setEmail(e.target.value)} />
-        <input type="password" placeholder="Jelszó" value={password} onChange={(e) => setPassword(e.target.value)} />
-        <input type="text" placeholder="Meghívókód" value={code} onChange={(e) => setCode(e.target.value)} />
-        <button type="submit">Regisztráció</button>
+      <form onSubmit={handleRegister}>
+        <input
+          type="email"
+          placeholder="Email"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          required
+          style={{ width: '100%', padding: '0.5rem', marginBottom: '1rem' }}
+        />
+        <input
+          type="password"
+          placeholder="Jelszó"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          required
+          style={{ width: '100%', padding: '0.5rem', marginBottom: '1rem' }}
+        />
+        <button type="submit" disabled={loading} style={{ width: '100%', padding: '0.75rem' }}>
+          {loading ? 'Feldolgozás...' : 'Regisztrálok'}
+        </button>
       </form>
-      {message && <p style={{ marginTop: '1rem' }}>{message}</p>}
+      {error && <p style={{ color: 'red', marginTop: '1rem' }}>{error}</p>}
+      {success && <p style={{ color: 'green', marginTop: '1rem' }}>{success}</p>}
     </div>
   )
 }
